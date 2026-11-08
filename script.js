@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const isReducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
+
   const isTouch = window.matchMedia("(pointer: coarse)").matches;
 
   const pointer = document.querySelector(".pointer");
@@ -9,16 +10,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (isReducedMotion || isTouch || !pointer || !coordinates) return;
 
-  window.addEventListener("pointermove", ({ clientX, clientY }) => {
-    pointer.style.setProperty("--mouse-x", `${clientX}px`);
-    pointer.style.setProperty("--mouse-y", `${clientY}px`);
-    pointer.classList.add("is-visible");
+  let mouseX = 0;
+  let mouseY = 0;
+  let frame = null;
 
-    // pointermove отдаёт дробные значения
-    coordinates.textContent = `x: ${Math.round(clientX)} y: ${Math.round(clientY)}`;
-  });
+  window.addEventListener(
+    "pointermove",
+    ({ clientX, clientY }) => {
+      mouseX = clientX;
+      mouseY = clientY;
 
-  // Прячем кружок, когда мышь покидает окно
+      if (frame !== null) return;
+
+      frame = requestAnimationFrame(() => {
+        pointer.style.setProperty("--mouse-x", `${mouseX}px`);
+        pointer.style.setProperty("--mouse-y", `${mouseY}px`);
+
+        pointer.classList.add("is-visible");
+
+        coordinates.textContent = `x: ${Math.round(mouseX)} y: ${Math.round(mouseY)}`;
+
+        frame = null;
+      });
+    },
+    { passive: true },
+  );
+
   document.documentElement.addEventListener("pointerleave", () => {
     pointer.classList.remove("is-visible");
   });
